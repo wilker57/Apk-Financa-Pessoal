@@ -1,10 +1,10 @@
-# flutter_application_1
+# Apk-Financa-Pessoal
 
-A new Flutter project.
+Aplicativo de Gestão de Despesas Pessoais
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+This project is a Flutter application for personal finance management.
 
 A few resources to get you started if this is your first Flutter project:
 
