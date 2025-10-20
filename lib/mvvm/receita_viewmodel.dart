@@ -1,0 +1,45 @@
+import 'package:flutter/foundation.dart';
+import '../models/receita/receita.dart';
+import '../services/dao/receita_dao.dart';
+
+class ReceitaViewModel extends ChangeNotifier {
+  final ReceitaDao _receitaDao = ReceitaDao();
+  List<Receita> _receitas = [];
+  int? _usuarioIdAtual;
+
+  List<Receita> get receitas => _receitas;
+
+  void setUsuario(int usuarioId) {
+    _usuarioIdAtual = usuarioId;
+    carregarReceitas();
+  }
+
+  Future<void> carregarReceitas() async {
+    if (_usuarioIdAtual != null) {
+      _receitas = await _receitaDao.readByUsuario(_usuarioIdAtual!);
+      notifyListeners();
+    }
+  }
+
+  Future<void> adicionarReceita(Receita receita) async {
+    await _receitaDao.create(receita);
+    await carregarReceitas();
+  }
+
+  Future<void> removerReceita(int id) async {
+    await _receitaDao.delete(id);
+    await carregarReceitas();
+  }
+
+  Future<void> atualizarReceita(Receita receita) async {
+    await _receitaDao.update(receita);
+    await carregarReceitas();
+  }
+
+  Future<double> get totalReceitas async {
+    if (_usuarioIdAtual != null) {
+      return await _receitaDao.getTotalByUsuario(_usuarioIdAtual!);
+    }
+    return 0.0;
+  }
+}
