@@ -6,6 +6,9 @@ class Despesa {
   double valor;
   DateTime data;
   DateTime dataCriacao;
+  String pagamentoTipo;
+  int parcelasTotal;
+  int? parcelaNumero;
 
   Despesa({
     this.id,
@@ -15,6 +18,9 @@ class Despesa {
     required this.valor,
     required this.data,
     DateTime? dataCriacao,
+    this.pagamentoTipo = 'AVISTA',
+    this.parcelasTotal = 1,
+    this.parcelaNumero = 1,
   }) : dataCriacao = dataCriacao ?? DateTime.now();
 
   Map<String, dynamic> toMap() {
@@ -26,6 +32,9 @@ class Despesa {
       'valor': valor,
       'data': data.toIso8601String(),
       'dataCriacao': dataCriacao.toIso8601String(),
+      'pagamentoTipo': pagamentoTipo,
+      'parcelasTotal': parcelasTotal,
+      'parcelaNumero': parcelaNumero,
     };
   }
 
@@ -38,6 +47,9 @@ class Despesa {
       valor: map['valor'],
       data: DateTime.parse(map['data']),
       dataCriacao: DateTime.parse(map['dataCriacao']),
+      pagamentoTipo: map['pagamentoTipo'] ?? 'AVISTA',
+      parcelasTotal: map['parcelasTotal'] ?? 1,
+      parcelaNumero: map['parcelaNumero'] ?? 1,
     );
   }
 

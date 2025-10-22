@@ -5,7 +5,10 @@ import '../mvvm/receita_viewmodel.dart';
 import '../mvvm/despesa_viewmodel.dart';
 import '../mvvm/saldo_viewmodel.dart';
 import '../mvvm/categoria_viewmodel.dart';
+import 'adicionar_receita_view.dart';
+import 'adicionar_despesa_view.dart';
 import 'login_view.dart';
+import 'relatorios_view.dart';
 import 'package:intl/intl.dart';
 
 class HomeView extends StatefulWidget {
@@ -80,6 +83,14 @@ class _HomeViewState extends State<HomeView> {
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.bar_chart),
+            onPressed: () {
+              Navigator.of(context).push(
+                  MaterialPageRoute(builder: (c) => const RelatoriosView()));
+            },
+            tooltip: 'Relatórios',
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: _logout,
@@ -281,12 +292,56 @@ class _HomeViewState extends State<HomeView> {
                         ),
                         title: Text(receita.descricao),
                         subtitle: Text(dateFormatter.format(receita.data)),
-                        trailing: Text(
-                          formatter.format(receita.valor),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
-                          ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              formatter.format(receita.valor),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                              ),
+                            ),
+                            PopupMenuButton<String>(
+                              onSelected: (value) async {
+                                final receitaVM = Provider.of<ReceitaViewModel>(
+                                    context,
+                                    listen: false);
+                                if (value == 'edit') {
+                                  Navigator.of(context).push(MaterialPageRoute(
+                                      builder: (c) => AdicionarReceitaView(
+                                          receita: receita)));
+                                } else if (value == 'delete') {
+                                  final ok = await showDialog<bool>(
+                                      context: context,
+                                      builder: (c) => AlertDialog(
+                                            title: const Text('Confirmar'),
+                                            content: const Text(
+                                                'Remover esta receita?'),
+                                            actions: [
+                                              TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(c, false),
+                                                  child:
+                                                      const Text('Cancelar')),
+                                              TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(c, true),
+                                                  child: const Text('Remover'))
+                                            ],
+                                          ));
+                                  if (ok == true)
+                                    await receitaVM.removerReceita(receita.id!);
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(
+                                    value: 'edit', child: Text('Editar')),
+                                const PopupMenuItem(
+                                    value: 'delete', child: Text('Excluir')),
+                              ],
+                            ),
+                          ],
                         ),
                       );
                     }).toList(),
@@ -341,14 +396,71 @@ class _HomeViewState extends State<HomeView> {
                           child:
                               Icon(Icons.arrow_downward, color: Colors.white),
                         ),
-                        title: Text(despesa.descricao),
+                        title: Row(
+                          children: [
+                            Expanded(child: Text(despesa.descricao)),
+                            if (despesa.pagamentoTipo == 'PARCELADO')
+                              Padding(
+                                padding: const EdgeInsets.only(left: 8.0),
+                                child: Chip(
+                                  label: Text(
+                                      '${despesa.parcelaNumero}/${despesa.parcelasTotal}'),
+                                  backgroundColor: Colors.orange.shade100,
+                                ),
+                              ),
+                          ],
+                        ),
                         subtitle: Text(dateFormatter.format(despesa.data)),
-                        trailing: Text(
-                          formatter.format(despesa.valor),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.red,
-                          ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              formatter.format(despesa.valor),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.red,
+                              ),
+                            ),
+                            PopupMenuButton<String>(
+                              onSelected: (value) async {
+                                final despesaVM = Provider.of<DespesaViewModel>(
+                                    context,
+                                    listen: false);
+                                if (value == 'edit') {
+                                  Navigator.of(context).push(MaterialPageRoute(
+                                      builder: (c) => AdicionarDespesaView(
+                                          despesa: despesa)));
+                                } else if (value == 'delete') {
+                                  final ok = await showDialog<bool>(
+                                      context: context,
+                                      builder: (c) => AlertDialog(
+                                            title: const Text('Confirmar'),
+                                            content: const Text(
+                                                'Remover esta despesa?'),
+                                            actions: [
+                                              TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(c, false),
+                                                  child:
+                                                      const Text('Cancelar')),
+                                              TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(c, true),
+                                                  child: const Text('Remover'))
+                                            ],
+                                          ));
+                                  if (ok == true)
+                                    await despesaVM.removerDespesa(despesa.id!);
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(
+                                    value: 'edit', child: Text('Editar')),
+                                const PopupMenuItem(
+                                    value: 'delete', child: Text('Excluir')),
+                              ],
+                            ),
+                          ],
                         ),
                       );
                     }).toList(),
@@ -372,10 +484,9 @@ class _HomeViewState extends State<HomeView> {
                 title: const Text('Adicionar Receita'),
                 onTap: () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                          'Tela de adicionar receita em desenvolvimento...'),
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const AdicionarReceitaView(),
                     ),
                   );
                 },
@@ -385,10 +496,9 @@ class _HomeViewState extends State<HomeView> {
                 title: const Text('Adicionar Despesa'),
                 onTap: () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                          'Tela de adicionar despesa em desenvolvimento...'),
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const AdicionarDespesaView(),
                     ),
                   );
                 },

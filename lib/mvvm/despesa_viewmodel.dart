@@ -42,4 +42,20 @@ class DespesaViewModel extends ChangeNotifier {
     }
     return 0.0;
   }
+
+  Future<double> totalDespesasEntre(DateTime from, DateTime to) async {
+    if (_usuarioIdAtual != null) {
+      return await _despesaDao.getTotalByUsuarioBetween(
+          _usuarioIdAtual!, from, to);
+    }
+    return 0.0;
+  }
+
+  Future<List<Map<String, dynamic>>> despesasPorDia(
+      DateTime from, DateTime to) async {
+    if (_usuarioIdAtual != null) {
+      return await _despesaDao.getSumByDay(_usuarioIdAtual!, from, to);
+    }
+    return [];
+  }
 }

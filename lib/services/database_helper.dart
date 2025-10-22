@@ -17,10 +17,29 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
+    // bump DB version to 2 to add payment fields for parcelas
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          try {
+            await db.execute(
+                "ALTER TABLE despesas ADD COLUMN pagamentoTipo TEXT DEFAULT 'AVISTA'");
+          } catch (e) {
+            // ignore if column already exists
+          }
+          try {
+            await db.execute(
+                "ALTER TABLE despesas ADD COLUMN parcelasTotal INTEGER DEFAULT 1");
+          } catch (e) {}
+          try {
+            await db.execute(
+                "ALTER TABLE despesas ADD COLUMN parcelaNumero INTEGER DEFAULT 1");
+          } catch (e) {}
+        }
+      },
     );
   }
 
@@ -76,6 +95,9 @@ class DatabaseHelper {
         valor $realType,
         data $textType,
         dataCriacao $textType,
+        pagamentoTipo TEXT,
+        parcelasTotal INTEGER,
+        parcelaNumero INTEGER,
         FOREIGN KEY (usuarioId) REFERENCES usuarios (id) ON DELETE CASCADE,
         FOREIGN KEY (categoriaId) REFERENCES categorias (id) ON DELETE SET NULL
       )
