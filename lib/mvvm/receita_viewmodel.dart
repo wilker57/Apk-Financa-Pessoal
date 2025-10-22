@@ -42,4 +42,20 @@ class ReceitaViewModel extends ChangeNotifier {
     }
     return 0.0;
   }
+
+  Future<double> totalReceitasEntre(DateTime from, DateTime to) async {
+    if (_usuarioIdAtual != null) {
+      return await _receitaDao.getTotalByUsuarioBetween(
+          _usuarioIdAtual!, from, to);
+    }
+    return 0.0;
+  }
+
+  Future<List<Map<String, dynamic>>> receitasPorDia(
+      DateTime from, DateTime to) async {
+    if (_usuarioIdAtual != null) {
+      return await _receitaDao.getSumByDay(_usuarioIdAtual!, from, to);
+    }
+    return [];
+  }
 }

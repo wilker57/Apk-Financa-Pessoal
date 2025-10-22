@@ -49,6 +49,26 @@ class ReceitaDao {
     return result.first['total'] as double? ?? 0.0;
   }
 
+  Future<double> getTotalByUsuarioBetween(
+      int usuarioId, DateTime from, DateTime to) async {
+    final db = await dbHelper.database;
+    final result = await db.rawQuery(
+      'SELECT SUM(valor) as total FROM receitas WHERE usuarioId = ? AND date(data) BETWEEN date(?) AND date(?)',
+      [usuarioId, from.toIso8601String(), to.toIso8601String()],
+    );
+    return result.first['total'] as double? ?? 0.0;
+  }
+
+  Future<List<Map<String, dynamic>>> getSumByDay(
+      int usuarioId, DateTime from, DateTime to) async {
+    final db = await dbHelper.database;
+    final result = await db.rawQuery(
+      "SELECT date(data) as day, SUM(valor) as total FROM receitas WHERE usuarioId = ? AND date(data) BETWEEN date(?) AND date(?) GROUP BY date(data) ORDER BY date(data)",
+      [usuarioId, from.toIso8601String(), to.toIso8601String()],
+    );
+    return result;
+  }
+
   Future<int> update(Receita receita) async {
     final db = await dbHelper.database;
     return await db.update(
