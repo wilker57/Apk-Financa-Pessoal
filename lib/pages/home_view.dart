@@ -10,6 +10,10 @@ import 'adicionar_receita_view.dart';
 import 'adicionar_despesa_view.dart';
 import 'login_view.dart';
 import 'relatorios_view.dart';
+<<<<<<< HEAD
+=======
+import 'package:intl/intl.dart';
+>>>>>>> 33149a212ce0fcd001b971b6ddfda1ce09a5737e
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -76,12 +80,21 @@ class _HomeViewState extends State<HomeView> {
         foregroundColor: Colors.white,
         actions: [
           IconButton(
+<<<<<<< HEAD
             icon: const Icon(Icons.bar_chart_rounded),
             tooltip: 'Relatórios',
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const RelatoriosView()),
             ),
+=======
+            icon: const Icon(Icons.bar_chart),
+            onPressed: () {
+              Navigator.of(context).push(
+                  MaterialPageRoute(builder: (c) => const RelatoriosView()));
+            },
+            tooltip: 'Relatórios',
+>>>>>>> 33149a212ce0fcd001b971b6ddfda1ce09a5737e
           ),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -94,11 +107,368 @@ class _HomeViewState extends State<HomeView> {
         onRefresh: _carregarDados,
         child: const _DashboardContent(),
       ),
+<<<<<<< HEAD
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _mostrarOpcoesAdicionar,
         backgroundColor: const Color.fromARGB(212, 5, 166, 13),
         icon: const Icon(Icons.add),
         label: const Text('Adicionar'),
+=======
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _mostrarOpcoesAdicionar();
+        },
+        backgroundColor: Colors.blue,
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildSaldoCard(ReceitaViewModel receitaVM, DespesaViewModel despesaVM,
+      SaldoViewModel saldoVM) {
+    return FutureBuilder<List<double>>(
+      future: Future.wait([
+        receitaVM.totalReceitas,
+        despesaVM.totalDespesas,
+      ]),
+      builder: (context, snapshot) {
+        final totalReceitas = snapshot.data?[0] ?? 0.0;
+        final totalDespesas = snapshot.data?[1] ?? 0.0;
+        final saldoAtual =
+            saldoVM.calcularSaldoAtual(totalReceitas, totalDespesas);
+        final formatter = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+
+        return Card(
+          elevation: 4,
+          color: saldoAtual >= 0 ? Colors.green.shade50 : Colors.red.shade50,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              children: [
+                const Text(
+                  'Saldo Atual',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  formatter.format(saldoAtual),
+                  style: TextStyle(
+                    fontSize: 36,
+                    fontWeight: FontWeight.bold,
+                    color: saldoAtual >= 0
+                        ? Colors.green.shade700
+                        : Colors.red.shade700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildResumoCard(
+      ReceitaViewModel receitaVM, DespesaViewModel despesaVM) {
+    return FutureBuilder<List<double>>(
+      future: Future.wait([
+        receitaVM.totalReceitas,
+        despesaVM.totalDespesas,
+      ]),
+      builder: (context, snapshot) {
+        final totalReceitas = snapshot.data?[0] ?? 0.0;
+        final totalDespesas = snapshot.data?[1] ?? 0.0;
+        final formatter = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+
+        return Card(
+          elevation: 4,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    children: [
+                      const Icon(Icons.arrow_upward,
+                          color: Colors.green, size: 32),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Receitas',
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        formatter.format(totalReceitas),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 80,
+                  color: Colors.grey.shade300,
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      const Icon(Icons.arrow_downward,
+                          color: Colors.red, size: 32),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Despesas',
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        formatter.format(totalDespesas),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildReceitasSection(ReceitaViewModel receitaVM) {
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Receitas Recentes',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  '${receitaVM.receitas.length} itens',
+                  style: TextStyle(color: Colors.grey.shade600),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            receitaVM.receitas.isEmpty
+                ? const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text(
+                        'Nenhuma receita cadastrada',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                  )
+                : Column(
+                    children: receitaVM.receitas.take(5).map((receita) {
+                      final formatter =
+                          NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+                      final dateFormatter = DateFormat('dd/MM/yyyy');
+
+                      return ListTile(
+                        leading: const CircleAvatar(
+                          backgroundColor: Colors.green,
+                          child: Icon(Icons.arrow_upward, color: Colors.white),
+                        ),
+                        title: Text(receita.descricao),
+                        subtitle: Text(dateFormatter.format(receita.data)),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              formatter.format(receita.valor),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                              ),
+                            ),
+                            PopupMenuButton<String>(
+                              onSelected: (value) async {
+                                final receitaVM = Provider.of<ReceitaViewModel>(
+                                    context,
+                                    listen: false);
+                                if (value == 'edit') {
+                                  Navigator.of(context).push(MaterialPageRoute(
+                                      builder: (c) => AdicionarReceitaView(
+                                          receita: receita)));
+                                } else if (value == 'delete') {
+                                  final ok = await showDialog<bool>(
+                                      context: context,
+                                      builder: (c) => AlertDialog(
+                                            title: const Text('Confirmar'),
+                                            content: const Text(
+                                                'Remover esta receita?'),
+                                            actions: [
+                                              TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(c, false),
+                                                  child:
+                                                      const Text('Cancelar')),
+                                              TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(c, true),
+                                                  child: const Text('Remover'))
+                                            ],
+                                          ));
+                                  if (ok == true)
+                                    await receitaVM.removerReceita(receita.id!);
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(
+                                    value: 'edit', child: Text('Editar')),
+                                const PopupMenuItem(
+                                    value: 'delete', child: Text('Excluir')),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDespesasSection(DespesaViewModel despesaVM) {
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Despesas Recentes',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  '${despesaVM.despesas.length} itens',
+                  style: TextStyle(color: Colors.grey.shade600),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            despesaVM.despesas.isEmpty
+                ? const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text(
+                        'Nenhuma despesa cadastrada',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                  )
+                : Column(
+                    children: despesaVM.despesas.take(5).map((despesa) {
+                      final formatter =
+                          NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+                      final dateFormatter = DateFormat('dd/MM/yyyy');
+
+                      return ListTile(
+                        leading: const CircleAvatar(
+                          backgroundColor: Colors.red,
+                          child:
+                              Icon(Icons.arrow_downward, color: Colors.white),
+                        ),
+                        title: Row(
+                          children: [
+                            Expanded(child: Text(despesa.descricao)),
+                            if (despesa.pagamentoTipo == 'PARCELADO')
+                              Padding(
+                                padding: const EdgeInsets.only(left: 8.0),
+                                child: Chip(
+                                  label: Text(
+                                      '${despesa.parcelaNumero}/${despesa.parcelasTotal}'),
+                                  backgroundColor: Colors.orange.shade100,
+                                ),
+                              ),
+                          ],
+                        ),
+                        subtitle: Text(dateFormatter.format(despesa.data)),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              formatter.format(despesa.valor),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.red,
+                              ),
+                            ),
+                            PopupMenuButton<String>(
+                              onSelected: (value) async {
+                                final despesaVM = Provider.of<DespesaViewModel>(
+                                    context,
+                                    listen: false);
+                                if (value == 'edit') {
+                                  Navigator.of(context).push(MaterialPageRoute(
+                                      builder: (c) => AdicionarDespesaView(
+                                          despesa: despesa)));
+                                } else if (value == 'delete') {
+                                  final ok = await showDialog<bool>(
+                                      context: context,
+                                      builder: (c) => AlertDialog(
+                                            title: const Text('Confirmar'),
+                                            content: const Text(
+                                                'Remover esta despesa?'),
+                                            actions: [
+                                              TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(c, false),
+                                                  child:
+                                                      const Text('Cancelar')),
+                                              TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(c, true),
+                                                  child: const Text('Remover'))
+                                            ],
+                                          ));
+                                  if (ok == true)
+                                    await despesaVM.removerDespesa(despesa.id!);
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(
+                                    value: 'edit', child: Text('Editar')),
+                                const PopupMenuItem(
+                                    value: 'delete', child: Text('Excluir')),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+          ],
+        ),
+>>>>>>> 33149a212ce0fcd001b971b6ddfda1ce09a5737e
       ),
     );
   }
@@ -141,10 +511,17 @@ class _HomeViewState extends State<HomeView> {
                 ),
                 onPressed: () {
                   Navigator.pop(context);
+<<<<<<< HEAD
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                         builder: (_) => const AdicionarReceitaView()),
+=======
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const AdicionarReceitaView(),
+                    ),
+>>>>>>> 33149a212ce0fcd001b971b6ddfda1ce09a5737e
                   );
                 },
               ),
@@ -167,10 +544,17 @@ class _HomeViewState extends State<HomeView> {
                 ),
                 onPressed: () {
                   Navigator.pop(context);
+<<<<<<< HEAD
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                         builder: (_) => const AdicionarDespesaView()),
+=======
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const AdicionarDespesaView(),
+                    ),
+>>>>>>> 33149a212ce0fcd001b971b6ddfda1ce09a5737e
                   );
                 },
               ),
