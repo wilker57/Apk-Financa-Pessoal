@@ -20,33 +20,33 @@ class _LoginViewState extends State<LoginView> {
   final _senhaController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
-
+  // conter vazamentos de memória
   @override
   void dispose() {
     _emailController.dispose();
     _senhaController.dispose();
     super.dispose();
   }
-
+  // Autenticação de dados do formulário
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
-
+  // inicia o carregamento
     setState(() => _isLoading = true);
-
+  // interage com o pacote provider para obter a instância UsuarioView
     final usuarioVM = Provider.of<UsuarioViewModel>(context, listen: false);
     final sucesso = await usuarioVM.login(
       _emailController.text.trim().toLowerCase(),
       _senhaController.text,
     );
-
+    // garante que o codigo não tente atualizar um widget que não exixte
     if (!mounted) return;
-
+    // finaliza o carregamento
     setState(() => _isLoading = false);
-
+    // chama outra função para carregar os dados do usuário
     if (sucesso) {
       await _inicializarViewModels();
       if (!mounted) return;
-
+      // susbstitui a tela de login
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const HomeView()),
       );
@@ -54,7 +54,8 @@ class _LoginViewState extends State<LoginView> {
       _mostrarErro('E-mail ou senha incorretos ');
     }
   }
-
+ // exibi uma barra de notificação flutuante no rodape com 
+  // a mensagem de erro
   void _mostrarErro(String mensagem) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -65,7 +66,7 @@ class _LoginViewState extends State<LoginView> {
       ),
     );
   }
-
+  // traz os dados do usuário logado e informa outros viewModel
   Future<void> _inicializarViewModels() async {
     final usuarioVM = Provider.of<UsuarioViewModel>(context, listen: false);
     if (usuarioVM.usuarioAtual != null) {
@@ -77,7 +78,7 @@ class _LoginViewState extends State<LoginView> {
 
       receitaVM.setUsuario(id);
       despesaVM.setUsuario(id);
-
+  // carrega os demais dados 
       await Future.wait([
         receitaVM.carregarReceitas(),
         despesaVM.carregarDespesas(),
@@ -85,7 +86,7 @@ class _LoginViewState extends State<LoginView> {
       ]);
     }
   }
-
+  // base da tela 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
