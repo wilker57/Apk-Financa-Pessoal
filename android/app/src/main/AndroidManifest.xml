@@ -2,7 +2,8 @@
     <application
         android:label="Despesa pessoal"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:description= "Um app super personalizado">
         <activity
             android:name=".MainActivity"
             android:exported="true"
