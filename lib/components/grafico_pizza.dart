@@ -59,6 +59,7 @@ class ExpensePieChart extends StatelessWidget {
       // O raio pode ser ajustado para dar um efeito de "zoom"
       const double radius = 25;
       // Calcula a porcentagem para mostrar no título do gráfico (opcional)
+      // ignore: unused_local_variable
       final String percentage =
           '${((data.value / totalValue) * 100).toStringAsFixed(0)}%';
 
