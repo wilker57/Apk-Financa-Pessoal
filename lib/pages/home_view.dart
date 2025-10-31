@@ -20,6 +20,8 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> {
   bool _isLoading = true;
+  int _selectedIndex = 0;
+  // external resumo removed — values not required in Home
 
   @override
   void initState() {
@@ -68,6 +70,13 @@ class _HomeViewState extends State<HomeView> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu),
+            tooltip: 'Abrir menu',
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
         title: Text(
           'Olá, ${usuario?.nome ?? "Usuário"} ',
           style: const TextStyle(fontWeight: FontWeight.w600),
@@ -90,18 +99,136 @@ class _HomeViewState extends State<HomeView> {
           ),
         ],
       ),
+      drawer: Drawer(
+        child: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              UserAccountsDrawerHeader(
+                accountName: Text(usuario?.nome ?? 'Usuário'),
+                accountEmail: Text(usuario?.email ?? ''),
+                currentAccountPicture: CircleAvatar(
+                  child: Text(
+                      (usuario?.nome ?? 'U').substring(0, 1).toUpperCase()),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.home),
+                title: const Text('Home'),
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() => _selectedIndex = 0);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.arrow_upward),
+                title: const Text('Receitas'),
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() => _selectedIndex = 1);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.arrow_downward),
+                title: const Text('Despesas'),
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() => _selectedIndex = 2);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.bar_chart),
+                title: const Text('Relatórios'),
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() => _selectedIndex = 3);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.settings),
+                title: const Text('Configurações'),
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() => _selectedIndex = 4);
+                  // Navegar para a tela de configurações (a implementar)
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.logout),
+                title: const Text('Sair'),
+                onTap: _logout,
+              ),
+            ],
+          ),
+        ),
+      ),
       body: RefreshIndicator(
         onRefresh: _carregarDados,
-        child: const _DashboardContent(),
+        child: IndexedStack(
+          index: _selectedIndex,
+          children: [
+            const _DashboardContent(),
+            _ReceitaTab(),
+            _DespesaTab(),
+            const RelatoriosView(),
+          ],
+        ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _mostrarOpcoesAdicionar,
-        backgroundColor: const Color.fromARGB(212, 5, 166, 13),
-        icon: const Icon(Icons.add),
-        label: const Text('Adicionar'),
+      floatingActionButton: _buildFloatingActionButton(),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: (i) => setState(() => _selectedIndex = i),
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.arrow_upward), label: 'Receita'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.arrow_downward), label: 'Despesa'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.bar_chart), label: 'Relatórios'),
+        ],
       ),
     );
   }
+
+  Widget? _buildFloatingActionButton() {
+    // Show context-aware FAB: add receita/despesa when on respective tabs, default "Adicionar" on home
+    if (_selectedIndex == 1) {
+      return FloatingActionButton.extended(
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AdicionarReceitaView()),
+        ),
+        backgroundColor: Colors.green,
+        icon: const Icon(Icons.add),
+        label: const Text('Adicionar Receita'),
+      );
+    }
+
+    if (_selectedIndex == 2) {
+      return FloatingActionButton.extended(
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AdicionarDespesaView()),
+        ),
+        backgroundColor: Colors.red,
+        icon: const Icon(Icons.add),
+        label: const Text('Adicionar Despesa'),
+      );
+    }
+
+    // Default FAB (home)
+    return FloatingActionButton.extended(
+      onPressed: _mostrarOpcoesAdicionar,
+      backgroundColor: const Color.fromARGB(212, 5, 166, 13),
+      icon: const Icon(Icons.add),
+      label: const Text('Adicionar'),
+    );
+  }
+
+  // navigation to RelatoriosView is now a simple push; no data returned
 
   void _mostrarOpcoesAdicionar() {
     showDialog(
@@ -207,19 +334,6 @@ class _DashboardContent extends StatelessWidget {
         const SizedBox(height: 16),
         _ResumoCard(receitaVM: receitaVM, despesaVM: despesaVM),
         const SizedBox(height: 16),
-        _ListaTransacoes(
-          titulo: 'Receitas Recentes',
-          corPrincipal: Colors.green,
-          itens: receitaVM.receitas,
-          tipo: 'receita',
-        ),
-        const SizedBox(height: 16),
-        _ListaTransacoes(
-          titulo: 'Despesas Recentes',
-          corPrincipal: Colors.red,
-          itens: despesaVM.despesas,
-          tipo: 'despesa',
-        ),
       ],
     );
   }
@@ -319,25 +433,28 @@ class _ResumoCard extends StatelessWidget {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 2,
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-            child: Row(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: _ResumoCardItem(
-                    icon: Icons.arrow_upward,
-                    label: 'Receitas',
-                    valor: formatter.format(receitas),
-                    color: Colors.green,
-                  ),
-                ),
-                Container(width: 1, height: 70, color: Colors.grey.shade300),
-                Expanded(
-                  child: _ResumoCardItem(
-                    icon: Icons.arrow_downward,
-                    label: 'Despesas',
-                    valor: formatter.format(despesas),
-                    color: Colors.red,
-                  ),
+                Text('Resumo', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _ResumoCardItem(
+                      icon: Icons.arrow_upward_rounded,
+                      label: 'Receitas',
+                      valor: formatter.format(receitas),
+                      color: Colors.green,
+                    ),
+                    _ResumoCardItem(
+                      icon: Icons.arrow_downward_rounded,
+                      label: 'Despesas',
+                      valor: formatter.format(despesas),
+                      color: Colors.red,
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -368,116 +485,170 @@ class _ResumoCardItem extends StatelessWidget {
         Icon(icon, color: color, size: 32),
         const SizedBox(height: 6),
         Text(label,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w500)),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
         const SizedBox(height: 6),
         Text(valor,
             style: TextStyle(
-                color: color, fontSize: 26, fontWeight: FontWeight.bold)),
+                color: color, fontSize: 18, fontWeight: FontWeight.bold)),
       ],
     );
   }
 }
 
-// 🔹 LISTA DE TRANSAÇÕES
-class _ListaTransacoes extends StatelessWidget {
-  final String titulo;
-  final Color corPrincipal;
-  final List<dynamic> itens;
-  final String tipo;
+// Note: transaction list widgets were moved to RelatoriosView (_ListaTransacoesRel)
 
-  const _ListaTransacoes({
-    required this.titulo,
-    required this.corPrincipal,
-    required this.itens,
-    required this.tipo,
-  });
-
+// 🔹 RECEITA TAB
+class _ReceitaTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final receitaVM = context.watch<ReceitaViewModel>();
     final formatter = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
-    final dateFormatter = DateFormat('dd/MM/yyyy');
 
-    if (itens.isEmpty) {
-      return _EmptyState(mensagem: 'Nenhuma $tipo cadastrada');
-    }
+    final receitas = receitaVM.receitas;
 
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
+    if (receitas.isEmpty) {
+      return Center(
         child: Column(
-          children: [
-            Row(
-              children: [
-                Icon(
-                    tipo == 'receita'
-                        ? Icons.arrow_upward
-                        : Icons.arrow_downward,
-                    color: corPrincipal),
-                const SizedBox(width: 8),
-                Text(
-                  titulo,
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const Spacer(),
-                Text('${itens.length} itens',
-                    style: TextStyle(color: Colors.grey.shade600)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ...itens.take(5).map((e) {
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: corPrincipal,
-                  child: Icon(
-                    tipo == 'receita'
-                        ? Icons.arrow_upward
-                        : Icons.arrow_downward,
-                    color: Colors.white,
-                  ),
-                ),
-                title: Text(e.descricao),
-                subtitle: Text(dateFormatter.format(e.data)),
-                trailing: Text(
-                  formatter.format(e.valor),
-                  style: TextStyle(
-                      color: corPrincipal,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16),
-                ),
-              );
-            }),
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.arrow_upward, size: 64, color: Colors.green),
+            SizedBox(height: 12),
+            Text('Nenhuma receita encontrada'),
           ],
         ),
-      ),
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(12),
+      itemCount: receitas.length,
+      separatorBuilder: (_, __) => const Divider(),
+      itemBuilder: (context, index) {
+        final r = receitas[index];
+        return Dismissible(
+          key: ValueKey(r.id),
+          direction: DismissDirection.endToStart,
+          background: Container(
+            color: Colors.red,
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: const Icon(Icons.delete, color: Colors.white),
+          ),
+          confirmDismiss: (_) async {
+            final ok = await showDialog<bool>(
+              context: context,
+              builder: (c) => AlertDialog(
+                title: const Text('Confirmar'),
+                content: const Text('Deseja remover esta receita?'),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(c, false),
+                      child: const Text('Cancelar')),
+                  TextButton(
+                      onPressed: () => Navigator.pop(c, true),
+                      child: const Text('Remover')),
+                ],
+              ),
+            );
+            return ok == true;
+          },
+          onDismissed: (_) async {
+            final messenger = ScaffoldMessenger.of(context);
+            if (r.id != null) await receitaVM.removerReceita(r.id!);
+            messenger.showSnackBar(
+                const SnackBar(content: Text('Receita removida')));
+          },
+          child: ListTile(
+            title: Text(r.descricao),
+            subtitle: Text('${r.data.day}/${r.data.month}/${r.data.year}'),
+            trailing: Text(formatter.format(r.valor),
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, color: Colors.green)),
+            onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => AdicionarReceitaView(receita: r))),
+          ),
+        );
+      },
     );
   }
 }
 
-// 🔹 EMPTY STATE PADRÃO
-class _EmptyState extends StatelessWidget {
-  final String mensagem;
-
-  const _EmptyState({required this.mensagem});
-
+// 🔹 DESPESA TAB
+class _DespesaTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
+    final despesaVM = context.watch<DespesaViewModel>();
+    final formatter = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+
+    final despesas = despesaVM.despesas;
+
+    if (despesas.isEmpty) {
+      return Center(
         child: Column(
-          children: [
-            const Icon(Icons.inbox_rounded, color: Colors.grey, size: 48),
-            const SizedBox(height: 8),
-            Text(
-              mensagem,
-              style: const TextStyle(color: Colors.grey, fontSize: 15),
-            ),
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.arrow_downward, size: 64, color: Colors.red),
+            SizedBox(height: 12),
+            Text('Nenhuma despesa encontrada'),
           ],
         ),
-      ),
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(12),
+      itemCount: despesas.length,
+      separatorBuilder: (_, __) => const Divider(),
+      itemBuilder: (context, index) {
+        final d = despesas[index];
+        return Dismissible(
+          key: ValueKey(d.id),
+          direction: DismissDirection.endToStart,
+          background: Container(
+            color: Colors.red,
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: const Icon(Icons.delete, color: Colors.white),
+          ),
+          confirmDismiss: (_) async {
+            final ok = await showDialog<bool>(
+              context: context,
+              builder: (c) => AlertDialog(
+                title: const Text('Confirmar'),
+                content: const Text('Deseja remover esta despesa?'),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(c, false),
+                      child: const Text('Cancelar')),
+                  TextButton(
+                      onPressed: () => Navigator.pop(c, true),
+                      child: const Text('Remover')),
+                ],
+              ),
+            );
+            return ok == true;
+          },
+          onDismissed: (_) async {
+            final messenger = ScaffoldMessenger.of(context);
+            if (d.id != null) await despesaVM.removerDespesa(d.id!);
+            messenger.showSnackBar(
+                const SnackBar(content: Text('Despesa removida')));
+          },
+          child: ListTile(
+            title: Text(d.descricao),
+            subtitle: Text('${d.data.day}/${d.data.month}/${d.data.year}'),
+            trailing: Text(formatter.format(d.valor),
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, color: Colors.red)),
+            onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => AdicionarDespesaView(despesa: d))),
+          ),
+        );
+      },
     );
   }
 }
